@@ -23,23 +23,20 @@ import {
   Download
 } from 'lucide-react';
 
-// Importação via CDN para compatibilidade com o ambiente de execução e build
+// Importação via CDN para compatibilidade com o ambiente de execução atual.
+// NOTA PARA LOVABLE/PRODUÇÃO: Você pode substituir por 'import { createClient } from "@supabase/supabase-js";'
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 
-// Configuração de ambiente segura para Vite e ambientes legados
+// Helper para Variáveis de Ambiente
 const getEnv = (key, fallback) => {
   try {
-    // Tenta acessar via import.meta.env (Vite)
     if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env[key]) {
       return import.meta.env[key];
     }
-    // Tenta acessar via process.env (Node/Webpack)
     if (typeof process !== 'undefined' && process.env && process.env[key]) {
       return process.env[key];
     }
-  } catch (e) {
-    // Silencia erros de acesso a meta-propriedades
-  }
+  } catch (e) {}
   return fallback;
 };
 
@@ -79,7 +76,7 @@ const App = () => {
 
       if (!session) {
         const { data: { user: anonUser }, error: authError } = await client.auth.signInAnonymously();
-        if (authError) console.error("Erro na autenticação anônima:", authError);
+        if (authError) console.error("Erro Auth Anônimo:", authError);
         currentUser = anonUser;
       }
       
@@ -103,7 +100,7 @@ const App = () => {
         await client.from('profiles').insert({ id: userId, credits_balance: 100 });
       }
     } catch (e) {
-      console.warn("Verificando/Criando perfil...");
+      console.warn("Sincronizando perfil...");
     }
   };
 
@@ -138,7 +135,7 @@ const App = () => {
     const file = e.target.files[0];
     if (!file) return;
     if (file.size > 1500000) {
-      alert("Imagem muito grande (> 1.5MB). Por favor, comprima a imagem.");
+      alert("A imagem deve ter menos de 1.5MB.");
       return;
     }
     const base64 = await convertToBase64(file);
@@ -169,12 +166,12 @@ const App = () => {
     setGenerating(true);
     setGeneratedResult(null);
 
-    // Simulação do fluxo n8n -> Gemini -> Imagen
+    // Fluxo de simulação: aqui entraria o fetch para o Webhook do n8n
     setTimeout(async () => {
       setGenerating(false);
       setGeneratedResult({
         image: "https://images.unsplash.com/photo-1611162617474-5b21e879e113?q=80&w=1000&auto=format&fit=crop",
-        caption: "✨ Potencializando sua marca com IA! \n\nO design estratégico foi gerado com base no seu manual de identidade e no briefing enviado. Pronto para escala! 🚀"
+        caption: "✨ Design IA Concluído! \n\nSua arte foi gerada seguindo os padrões cromáticos e o tom de voz da sua marca. Pronto para postar! 🚀"
       });
       
       if (supabase && user) {
@@ -196,7 +193,7 @@ const App = () => {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-slate-950 font-sans">
         <div className="animate-spin rounded-full h-8 w-8 border-2 border-orange-500/20 border-t-orange-500"></div>
-        <p className="mt-4 text-slate-500 font-bold text-xs uppercase tracking-widest">Sincronizando com Supabase</p>
+        <p className="mt-4 text-slate-500 font-bold text-xs uppercase tracking-widest">Sincronizando SocialIA</p>
       </div>
     );
   }
@@ -243,7 +240,7 @@ const App = () => {
           {activeTab === 'chat' && (
             <div className="space-y-10">
               <div className="space-y-2 text-center md:text-left border-l-4 border-orange-600 pl-6">
-                <h2 className="text-3xl font-bold text-white tracking-tight italic uppercase">Gestor de Mídias IA</h2>
+                <h2 className="text-3xl font-bold text-white tracking-tight italic uppercase">Chat IA Gestor de Mídias</h2>
                 <p className="text-slate-500 font-medium">Design e estratégia salvos automaticamente no seu perfil.</p>
               </div>
 
@@ -255,7 +252,7 @@ const App = () => {
                       <textarea 
                         value={prompt}
                         onChange={(e) => setPrompt(e.target.value)}
-                        placeholder="Ex: Crie um post para Instagram sobre nossa nova promoção de verão..."
+                        placeholder="Ex: Crie um post para Instagram sobre nossa nova promoção..."
                         className="w-full h-44 p-5 rounded-2xl bg-slate-950 border border-slate-800 focus:border-orange-500 outline-none transition-all text-slate-300 text-sm leading-relaxed"
                       />
                     </div>
@@ -349,7 +346,7 @@ const App = () => {
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <div className="bg-slate-900 border border-slate-800 p-10 rounded-[2.5rem] shadow-xl space-y-10">
                   <div className="space-y-4">
-                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Upload de Logótipo</label>
+                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Logótipo em Base64</label>
                     <div className="flex items-center gap-6">
                       <div className="w-24 h-24 bg-slate-950 border-2 border-dashed border-slate-800 rounded-2xl flex items-center justify-center overflow-hidden">
                         {brandData.logo_base64 ? <img src={brandData.logo_base64} className="w-full h-full object-contain p-2" alt="Logo" /> : <ImageIcon size={24} className="text-slate-800" />}
@@ -386,7 +383,7 @@ const App = () => {
                      <textarea 
                        value={brandData.personality} 
                        onChange={(e) => setBrandData({...brandData, personality: e.target.value})} 
-                       placeholder="Descreva sua marca, tom de voz e como ela deve se comunicar..." 
+                       placeholder="Descreva sua marca, tom de voz e diretrizes para a IA..." 
                        className="w-full h-64 bg-slate-950 border border-slate-800 rounded-2xl p-5 text-sm font-medium outline-none focus:border-orange-500 leading-relaxed shadow-inner" 
                      />
                    </div>
@@ -401,7 +398,7 @@ const App = () => {
                <div className="flex justify-between items-center border-l-4 border-slate-800 pl-6">
                 <div>
                   <h2 className="text-2xl font-bold text-white tracking-tight uppercase tracking-widest opacity-90 italic">Extrato de Créditos</h2>
-                  <p className="text-slate-500 font-medium text-sm">Registro de todas as criações e transações no seu perfil.</p>
+                  <p className="text-slate-500 font-medium text-sm">Registro de todas as criações e transações do seu perfil.</p>
                 </div>
               </div>
                
@@ -410,8 +407,8 @@ const App = () => {
                    <thead className="bg-slate-950 text-slate-500 text-[10px] uppercase font-bold tracking-widest border-b border-slate-800">
                      <tr>
                        <th className="px-8 py-6">Data</th>
-                       <th className="px-8 py-6">Descrição da Atividade</th>
-                       <th className="px-8 py-6 text-right">Consumo</th>
+                       <th className="px-8 py-6">Descrição</th>
+                       <th className="px-8 py-6 text-right">Valor</th>
                      </tr>
                    </thead>
                    <tbody className="divide-y divide-slate-800">
@@ -423,7 +420,7 @@ const App = () => {
                        </tr>
                      )) : (
                        <tr>
-                         <td colSpan="3" className="px-8 py-16 text-center text-slate-600 font-bold italic">Nenhuma atividade registrada no seu histórico.</td>
+                         <td colSpan="3" className="px-8 py-16 text-center text-slate-600 font-bold italic">Nenhuma atividade registrada.</td>
                        </tr>
                      )}
                    </tbody>
@@ -435,7 +432,7 @@ const App = () => {
         </div>
       </main>
 
-      {/* MODAL: PLANOS DE CRÉDITOS */}
+      {/* MODAL: PLANOS */}
       {showPlans && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-6 animate-in fade-in duration-300">
           <div className="absolute inset-0 bg-slate-950/95 backdrop-blur-sm" onClick={() => setShowPlans(false)}></div>
@@ -443,7 +440,7 @@ const App = () => {
             <div className="p-10 border-b border-slate-800 flex justify-between items-center bg-slate-900/50">
               <div className="flex items-center gap-4">
                 <div className="p-3 bg-orange-600 rounded-2xl text-white shadow-lg"> <CreditCard size={24} /> </div>
-                <h3 className="text-xl font-bold text-white italic uppercase tracking-widest">Recarga de Pontos</h3>
+                <h3 className="text-xl font-bold text-white italic uppercase tracking-widest">Adquirir Pontos</h3>
               </div>
               <button onClick={() => setShowPlans(false)} className="w-12 h-12 bg-slate-800 rounded-full flex items-center justify-center text-slate-400 hover:text-white transition-all shadow-inner"> <X size={24} /> </button>
             </div>
@@ -477,8 +474,8 @@ const App = () => {
                <div className="mt-10 bg-slate-950 border border-slate-800 rounded-3xl p-8 flex items-center gap-4">
                   <ShieldCheck className="text-emerald-500" size={32} />
                   <div>
-                    <p className="text-xs font-black uppercase tracking-widest text-white">Transação Segura</p>
-                    <p className="text-slate-500 text-[10px] mt-1 font-medium">Os créditos adquiridos são adicionados instantaneamente ao seu saldo e não expiram.</p>
+                    <p className="text-xs font-black uppercase tracking-widest text-white">Segurança Total</p>
+                    <p className="text-slate-500 text-[10px] mt-1 font-medium">Os créditos são vitalícios e sua transação é criptografada.</p>
                   </div>
                </div>
             </div>
@@ -486,7 +483,7 @@ const App = () => {
         </div>
       )}
 
-      {/* Estilos Auxiliares para Scroll e Shadows */}
+      {/* Estilos Auxiliares */}
       <style>{`
         body { background-color: #020617; }
         ::-webkit-scrollbar { width: 5px; }
